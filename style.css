@@ -1,0 +1,36 @@
+body {
+  font-family: sans-serif;
+  text-align: center;
+  background: #f0f0f0;
+}
+
+#tree {
+  margin-top: 40px;
+  display: flex;
+  justify-content: center;
+}
+
+.node {
+  width: 40px;
+  height: 40px;
+  background: white;
+  border: 2px solid black;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 5px;
+  position: relative;
+  cursor: pointer;
+}
+
+.node.pebbled {
+  background: steelblue;
+  color: white;
+}
+
+.level {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
