@@ -7,15 +7,56 @@
 </head>
 <body>
   <h1>Pebble Game</h1>
-  <div id="setup">
-    <label for="levelInput">Select tree depth (2–10): </label>
-    <input type="number" id="levelInput" min="2" max="10" value="3" />
-    <button onclick="startGame()">Start Game</button>
+
+  <div id="main-column">
+    <!-- Explanation -->
+    <div class="box" id="directions">
+      <h2>Explanation</h2>
+      <p>
+        On each turn, you can do one of the following:
+        <ol>
+        <li>Click a leaf (bottom row) node to add a pebble.</li>
+        <li>Click any pebble to remove it.</li>
+        <li>If there is a pebble on both nodes below a node, then you can click and hold on a lower pebble to slide it up.</li>
+        </ol>
+        <strong>Your goal</strong> is to get a pebble to the top of the tree using the smallest possible pebble bank.
+      </p>
+    </div>
+
+    <!-- Setup -->
+    <div class="box" id="setup">
+      <h2>Setup</h2>
+      <div class="input-group">
+        <label for="levelInput">Tree Depth (2–5):</label>
+        <input type="number" id="levelInput" min="2" max="5" value="3" />
+      </div>
+      <div class="input-group">
+        <label for="pebbleInput">Initial Pebbles (1–32):</label>
+        <input type="number" id="pebbleInput" min="1" max="16" value="8" />
+      </div>
+      <button onclick="startGame()">New Game</button>
+    </div>
+
+    <!-- Pebble Bank -->
+    <div class="box" id="bank">
+      <h2>Pebble Bank</h2>
+      <div id="pebbleBankBox">
+        <div id="pebbleCountText"></div>
+        <div id="pebbleIcons"></div>
+      </div>
+    </div>
+
+    <!-- Tree -->
+    <div id="tree-container">
+      <svg id="edges"></svg>
+      <div id="tree"></div>
+    </div>
+
+    <!-- Undo and Success Message -->
+    <button onclick="undoAction()" id="undoButton">Undo</button>
+    <div id="successMessage">Success!</div>
   </div>
-  <div id="controls">
-    <p>Click a node to toggle a pebble. Shift+Click a parent to move up if both children have pebbles.</p>
-  </div>
-  <div id="tree"></div>
+
   <script src="game.js"></script>
 </body>
 </html>
