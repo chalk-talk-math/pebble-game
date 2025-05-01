@@ -74,7 +74,11 @@ function renderTree(depth) {
       el.addEventListener('mouseup', (e) => {
         clearTimeout(holdTimeout);
         if (!holdTriggered) {
-          if (isLeaf) {
+          if (node.hasPebble)
+          {
+            clearPebble(node.id);
+          }
+          else if (isLeaf) {
             togglePebble(node.id);
           }
         }
@@ -160,6 +164,20 @@ function togglePebble(id) {
   if (node.hasPebble) pebbleBank--;
   else pebbleBank++;
 
+  updatePebbleBank();
+  renderTree(treeDepth);
+}
+
+function clearPebble(id) {
+  const node = nodes[id];
+  if(node.hasPebble) 
+  {
+    const prev = { id, wasPebbled: node.hasPebble, type: "toggle" };
+    undoStack.push(prev);
+
+    node.hasPebble = false;
+    pebbleBank++;
+  }
   updatePebbleBank();
   renderTree(treeDepth);
 }
