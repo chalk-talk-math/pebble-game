@@ -1,6 +1,7 @@
 let nodes = [];
 let pebbleBank = 0;
 let treeDepth = 3;
+let holdTriggered = false;
 
 let undoStack = [];
 
@@ -51,7 +52,7 @@ function renderTree(depth) {
       node.element = el;
 
       let holdTimeout = null;
-      let holdTriggered = false;
+
 
       // Mouse and touch start
       el.addEventListener('mousedown', (e) => {
