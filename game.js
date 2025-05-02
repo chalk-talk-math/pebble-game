@@ -98,7 +98,7 @@ function renderTree(depth) {
             clearPebble(node.id);
           }
           else if (isLeaf) {
-            togglePebble(node.id);
+            addPebble(node.id);
           }
         }
       });
@@ -187,6 +187,26 @@ function clearPebble(id) {
   updatePebbleBank();
   renderTree(treeDepth);
 }
+
+function addPebble(id) {
+  const node = nodes[id];
+  if (!node.hasPebble && pebbleBank <= 0) {
+    alert("No pebbles left in the bank!");
+    return;
+  }
+
+  if(node.hasPebble) 
+  {
+    const prev = { id, wasPebbled: node.hasPebble, type: "toggle" };
+    undoStack.push(prev);
+
+    node.hasPebble = true;
+    pebbleBank--;
+  }
+  updatePebbleBank();
+  renderTree(treeDepth);
+}
+
 
 function updatePebbleBank() {
   const countText = document.getElementById("pebbleCountText");
