@@ -58,25 +58,18 @@ function renderTree(depth) {
 
 
       // Mouse and touch start
-      el.addEventListener('mousedown', (e) => {
-        select(node.id);
-      });
-
-      el.addEventListener('touchstart', (e) => {
+      el.addEventListener('pointerdown', (e) => {
         select(node.id);
       });
 
       // Mouse and touch end
-      el.addEventListener('mouseup', (e) => {
+      el.addEventListener('pointerup', (e) => {
         release(node.id);
       });
 
+      //Mouse leave event (no touch equivalent)
       el.addEventListener('mouseleave', (e) => {
         clearTimeout(holdTimeout);
-      });
-
-      el.addEventListener('touchend', (e) => {
-        release(node.id);
       });
 
       if (node.hasPebble) el.classList.add("pebbled");
@@ -98,6 +91,7 @@ function renderTree(depth) {
   }
 }
 
+//Called when either mouse or touch is released on a node
 function release(nodeIndex) {
   const node = nodes[nodeIndex];
   const isLeaf = nodeIndex >= leafStartIndex;
@@ -112,6 +106,7 @@ function release(nodeIndex) {
   }
 }
 
+//Called when either mouse or touch is pressed on a node
 function select(nodeIndex) {
   const node = nodes[nodeIndex];
   const isLeaf = nodeIndex >= leafStartIndex;
