@@ -3,6 +3,8 @@ let pebbleBank = 0;
 let treeDepth = 3;
 let holdTriggered = false;
 let holdTimeout = null;
+leafStartIndex = 0;
+
 
 let undoStack = [];
 
@@ -36,7 +38,7 @@ function renderTree(depth) {
 
   let nodeIndex = 0;
   const totalNodes = nodes.length;
-  const leafStartIndex = totalNodes - Math.pow(2, depth - 1);
+  let leafStartIndex = totalNodes - Math.pow(2, depth - 1);
   const levelSpacing = 100;
 
   for (let level = 0; level < depth; level++) {
@@ -45,8 +47,8 @@ function renderTree(depth) {
 
     const numNodesAtLevel = Math.pow(2, level);
     for (let i = 0; i < numNodesAtLevel; i++) {
-      const node = nodes[nodeIndex];
-      const isLeaf = nodeIndex >= leafStartIndex;
+      let node = nodes[nodeIndex];
+
 
       const el = document.createElement("div");
       el.className = "node";
@@ -57,16 +59,16 @@ function renderTree(depth) {
 
       // Mouse and touch start
       el.addEventListener('mousedown', (e) => {
-        select(node,isLeaf);
+        select(node.id);
       });
 
       el.addEventListener('touchstart', (e) => {
-       select(node,isLeaf); 
+        select(node.id);
       });
 
       // Mouse and touch end
       el.addEventListener('mouseup', (e) => {
-        release(node,isLeaf);
+        release(node.id);
       });
 
       el.addEventListener('mouseleave', (e) => {
@@ -74,7 +76,7 @@ function renderTree(depth) {
       });
 
       el.addEventListener('touchend', (e) => {
-        release(node,isLeaf);
+        release(node.id);
       });
 
       if (node.hasPebble) el.classList.add("pebbled");
@@ -96,11 +98,12 @@ function renderTree(depth) {
   }
 }
 
-function release(node,isLeaf) {
+function release(nodeIndex) {
+  const node = nodes[nodeIndex];
+  const isLeaf = nodeIndex >= leafStartIndex;
   clearTimeout(holdTimeout);
   if (!holdTriggered) {
-    if (node.hasPebble)
-    {
+    if (node.hasPebble) {
       clearPebble(node.id);
     }
     else if (isLeaf) {
@@ -109,7 +112,9 @@ function release(node,isLeaf) {
   }
 }
 
-function select(node,isLeaf){
+function select(nodeIndex) {
+  const node = nodes[nodeIndex];
+  const isLeaf = nodeIndex >= leafStartIndex;
   holdTriggered = false;
   holdTimeout = setTimeout(() => {
     tryMovePebbleUp(node.id);
@@ -171,8 +176,7 @@ function togglePebble(id) {
 
 function clearPebble(id) {
   const node = nodes[id];
-  if(node.hasPebble) 
-  {
+  if (node.hasPebble) {
     const prev = { id, wasPebbled: node.hasPebble, type: "toggle" };
     undoStack.push(prev);
 
@@ -190,8 +194,7 @@ function addPebble(id) {
     return;
   }
 
-  if(node.hasPebble) 
-  {
+  if (!node.hasPebble) {
     const prev = { id, wasPebbled: node.hasPebble, type: "toggle" };
     undoStack.push(prev);
 
@@ -260,9 +263,9 @@ function undoAction() {
   if (!last) return;
 
   if (last.type === "moveUpOne") {
-  nodes[last.from].hasPebble = true;
-  nodes[last.to].hasPebble = false;
-}
+    nodes[last.from].hasPebble = true;
+    nodes[last.to].hasPebble = false;
+  }
 
   if (last.type === "toggle") {
     nodes[last.id].hasPebble = last.wasPebbled;
