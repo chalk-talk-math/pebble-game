@@ -57,33 +57,16 @@ function renderTree(depth) {
 
       // Mouse and touch start
       el.addEventListener('mousedown', (e) => {
-        holdTriggered = false;
-        holdTimeout = setTimeout(() => {
-          tryMovePebbleUp(node.id);
-          holdTriggered = true;
-        }, 500); // Hold for 500ms to trigger move
+        select(node,isLeaf);
       });
 
       el.addEventListener('touchstart', (e) => {
-        holdTriggered = false;
-        holdTimeout = setTimeout(() => {
-          tryMovePebbleUp(node.id);
-          holdTriggered = true;
-        }, 500);
+       select(node,isLeaf); 
       });
 
       // Mouse and touch end
       el.addEventListener('mouseup', (e) => {
-        clearTimeout(holdTimeout);
-        if (!holdTriggered) {
-          if (node.hasPebble)
-          {
-            clearPebble(node.id);
-          }
-          else if (isLeaf) {
-            togglePebble(node.id);
-          }
-        }
+        release(node,isLeaf);
       });
 
       el.addEventListener('mouseleave', (e) => {
@@ -91,16 +74,7 @@ function renderTree(depth) {
       });
 
       el.addEventListener('touchend', (e) => {
-        clearTimeout(holdTimeout);
-        if (!holdTriggered) {
-          if (node.hasPebble)
-          {
-            clearPebble(node.id);
-          }
-          else if (isLeaf) {
-            addPebble(node.id);
-          }
-        }
+        release(node,isLeaf);
       });
 
       if (node.hasPebble) el.classList.add("pebbled");
@@ -120,6 +94,27 @@ function renderTree(depth) {
   } else {
     successMessage.style.display = "none";
   }
+}
+
+function release(node,isLeaf) {
+  clearTimeout(holdTimeout);
+  if (!holdTriggered) {
+    if (node.hasPebble)
+    {
+      clearPebble(node.id);
+    }
+    else if (isLeaf) {
+      addPebble(node.id);
+    }
+  }
+}
+
+function select(node,isLeaf){
+  holdTriggered = false;
+  holdTimeout = setTimeout(() => {
+    tryMovePebbleUp(node.id);
+    holdTriggered = true;
+  }, 500);
 }
 
 function drawEdges() {
