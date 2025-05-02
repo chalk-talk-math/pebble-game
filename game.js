@@ -2,6 +2,7 @@ let nodes = [];
 let pebbleBank = 0;
 let treeDepth = 3;
 let holdTriggered = false;
+let holdTimeout = null;
 
 let undoStack = [];
 
@@ -51,7 +52,7 @@ function renderTree(depth) {
       el.className = "node";
       node.element = el;
 
-      let holdTimeout = null;
+
 
 
       // Mouse and touch start
@@ -92,7 +93,11 @@ function renderTree(depth) {
       el.addEventListener('touchend', (e) => {
         clearTimeout(holdTimeout);
         if (!holdTriggered) {
-          if (isLeaf) {
+          if (node.hasPebble)
+          {
+            clearPebble(node.id);
+          }
+          else if (isLeaf) {
             togglePebble(node.id);
           }
         }
