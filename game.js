@@ -2,6 +2,9 @@ let nodes = [];
 let pebbleBank = 0;
 let treeDepth = 3;
 let holdTriggered = false;
+let holdTimeout = null;
+leafStartIndex = 0;
+
 
 let undoStack = [];
 
@@ -9,6 +12,16 @@ const treeContainer = document.getElementById("tree");
 const edgeSvg = document.getElementById("edges");
 const pebbleBankDisplay = document.getElementById("pebbleBankDisplay");
 
+/**
+ * Initializes and starts the pebble game by setting up the tree structure
+ * and pebble bank based on user input. The function ensures that the tree
+ * depth and pebble count are within predefined limits, creates the nodes
+ * for the tree, and renders the tree on the screen.
+ *
+ * @function
+ * @global
+ * @throws {TypeError} Throws an error if the input values cannot be parsed as integers.
+ */
 function startGame() {
   const depthInput = document.getElementById("levelInput");
   const pebbleInput = document.getElementById("pebbleInput");
@@ -29,13 +42,21 @@ function startGame() {
   updatePebbleBank();
 }
 
+/**
+ * Renders a binary tree structure in the DOM based on the given depth and node data.
+ * Clears the existing tree and edge elements, then dynamically creates and appends
+ * nodes and levels to the tree container. Adds event listeners for interaction with
+ * the nodes and updates the success message visibility based on the root node's state.
+ *
+ * @param {number} depth - The depth of the tree to render. Determines the number of levels.
+ */
 function renderTree(depth) {
   treeContainer.innerHTML = "";
   edgeSvg.innerHTML = "";
 
   let nodeIndex = 0;
   const totalNodes = nodes.length;
-  const leafStartIndex = totalNodes - Math.pow(2, depth - 1);
+  let leafStartIndex = totalNodes - Math.pow(2, depth - 1);
   const levelSpacing = 100;
 
   for (let level = 0; level < depth; level++) {
@@ -44,58 +65,26 @@ function renderTree(depth) {
 
     const numNodesAtLevel = Math.pow(2, level);
     for (let i = 0; i < numNodesAtLevel; i++) {
-      const node = nodes[nodeIndex];
-      const isLeaf = nodeIndex >= leafStartIndex;
+      let node = nodes[nodeIndex];
+
 
       const el = document.createElement("div");
       el.className = "node";
       node.element = el;
 
-      let holdTimeout = null;
-
-
       // Mouse and touch start
-      el.addEventListener('mousedown', (e) => {
-        holdTriggered = false;
-        holdTimeout = setTimeout(() => {
-          tryMovePebbleUp(node.id);
-          holdTriggered = true;
-        }, 500); // Hold for 500ms to trigger move
-      });
-
-      el.addEventListener('touchstart', (e) => {
-        holdTriggered = false;
-        holdTimeout = setTimeout(() => {
-          tryMovePebbleUp(node.id);
-          holdTriggered = true;
-        }, 500);
+      el.addEventListener('pointerdown', (e) => {
+        select(node.id);
       });
 
       // Mouse and touch end
-      el.addEventListener('mouseup', (e) => {
-        clearTimeout(holdTimeout);
-        if (!holdTriggered) {
-          if (node.hasPebble)
-          {
-            clearPebble(node.id);
-          }
-          else if (isLeaf) {
-            togglePebble(node.id);
-          }
-        }
+      el.addEventListener('pointerup', (e) => {
+        release(node.id);
       });
 
+      //Mouse leave event (no touch equivalent)
       el.addEventListener('mouseleave', (e) => {
         clearTimeout(holdTimeout);
-      });
-
-      el.addEventListener('touchend', (e) => {
-        clearTimeout(holdTimeout);
-        if (!holdTriggered) {
-          if (isLeaf) {
-            togglePebble(node.id);
-          }
-        }
       });
 
       if (node.hasPebble) el.classList.add("pebbled");
@@ -117,6 +106,60 @@ function renderTree(depth) {
   }
 }
 
+
+/**
+ * Handles the release action for a node in the pebble game.
+ * If the node has a pebble, it clears the pebble. If the node is a leaf and does not have a pebble, it adds a pebble.
+ * The function also clears any active timeout and ensures the action is only performed if the hold was not triggered.
+ *
+ * @param {number} nodeIndex - The index of the node to release.
+ */
+function release(nodeIndex) {
+  const node = nodes[nodeIndex];
+  const isLeaf = nodeIndex >= leafStartIndex;
+  clearTimeout(holdTimeout);
+  if (!holdTriggered) {
+    if (node.hasPebble) {
+      clearPebble(node.id);
+    }
+    else if (isLeaf) {
+      addPebble(node.id);
+    }
+  }
+}
+
+
+/**
+ * Handles the selection of a node in the game. If the selected node is a leaf node,
+ * it sets up a timeout to trigger a "hold" action after 500 milliseconds, which attempts
+ * to move a pebble up from the selected node.
+ *
+ * @param {number} nodeIndex - The index of the node being selected.
+ */
+function select(nodeIndex) {
+  const node = nodes[nodeIndex];
+  const isLeaf = nodeIndex >= leafStartIndex;
+  holdTriggered = false;
+  holdTimeout = setTimeout(() => {
+    tryMovePebbleUp(node.id);
+    holdTriggered = true;
+  }, 500);
+}
+
+/**
+ * Draws edges between parent and child nodes in a binary tree structure.
+ * Clears the existing edges from the SVG container and iterates through
+ * the nodes to draw lines connecting each parent node to its left and
+ * right child nodes, if they exist.
+ *
+ * Assumes the following:
+ * - `edgeSvg` is a global variable representing the SVG container for edges.
+ * - `treeDepth` is a global variable representing the depth of the tree.
+ * - `nodes` is a global array where each element contains a `element` property
+ *   representing the DOM element of the node.
+ * - `drawLine` is a function that takes two DOM elements and draws a line
+ *   between them.
+ */
 function drawEdges() {
   edgeSvg.innerHTML = "";
   const depth = treeDepth;
@@ -130,6 +173,12 @@ function drawEdges() {
   }
 }
 
+/**
+ * Draws a line between two HTML elements on an SVG canvas.
+ *
+ * @param {HTMLElement} fromEl - The starting HTML element for the line.
+ * @param {HTMLElement} toEl - The ending HTML element for the line.
+ */
 function drawLine(fromEl, toEl) {
   const fromRect = fromEl.getBoundingClientRect();
   const toRect = toEl.getBoundingClientRect();
@@ -151,28 +200,17 @@ function drawLine(fromEl, toEl) {
   edgeSvg.appendChild(line);
 }
 
-function togglePebble(id) {
-  const node = nodes[id];
-  if (!node.hasPebble && pebbleBank <= 0) {
-    alert("No pebbles left in the bank!");
-    return;
-  }
-
-  const prev = { id, wasPebbled: node.hasPebble, type: "toggle" };
-  undoStack.push(prev);
-
-  node.hasPebble = !node.hasPebble;
-  if (node.hasPebble) pebbleBank--;
-  else pebbleBank++;
-
-  updatePebbleBank();
-  renderTree(treeDepth);
-}
-
+/**
+ * Clears a pebble from the specified node by its ID. If the node has a pebble,
+ * it updates the node's state, increments the pebble bank, and records the action
+ * in the undo stack for potential reversal. Finally, it updates the pebble bank
+ * display and re-renders the tree.
+ *
+ * @param {number} id - The ID of the node from which the pebble will be cleared.
+ */
 function clearPebble(id) {
   const node = nodes[id];
-  if(node.hasPebble) 
-  {
+  if (node.hasPebble) {
     const prev = { id, wasPebbled: node.hasPebble, type: "toggle" };
     undoStack.push(prev);
 
@@ -183,6 +221,49 @@ function clearPebble(id) {
   renderTree(treeDepth);
 }
 
+/**
+ * Adds a pebble to a node identified by its ID. If the node does not already
+ * have a pebble and there are pebbles available in the bank, it updates the
+ * node's state, decrements the pebble bank, and updates the tree rendering.
+ * If no pebbles are left in the bank, an alert is shown.
+ *
+ * @param {number} id - The unique identifier of the node to which a pebble is added.
+ */
+function addPebble(id) {
+  const node = nodes[id];
+  if (!node.hasPebble && pebbleBank <= 0) {
+    alert("No pebbles left in the bank!");
+    return;
+  }
+
+  if (!node.hasPebble) {
+    const prev = { id, wasPebbled: node.hasPebble, type: "toggle" };
+    undoStack.push(prev);
+
+    node.hasPebble = true;
+    pebbleBank--;
+  }
+  updatePebbleBank();
+  renderTree(treeDepth);
+}
+
+
+/**
+ * Updates the pebble bank display on the webpage.
+ * 
+ * This function updates the text content of an element with the ID "pebbleCountText"
+ * to show the current number of pebbles in the pebble bank. It also clears and repopulates
+ * the element with the ID "pebbleIcons" with a number of pebble icons corresponding to
+ * the current pebble count.
+ * 
+ * Assumes the existence of a global variable `pebbleBank` representing the current
+ * number of pebbles.
+ * 
+ * Dependencies:
+ * - An element with the ID "pebbleCountText" must exist in the DOM.
+ * - An element with the ID "pebbleIcons" must exist in the DOM.
+ * - A CSS class "pebble" must be defined for the pebble icons.
+ */
 function updatePebbleBank() {
   const countText = document.getElementById("pebbleCountText");
   const iconsBox = document.getElementById("pebbleIcons");
@@ -198,6 +279,20 @@ function updatePebbleBank() {
 }
 
 
+/**
+ * Attempts to move a pebble from a child node to its parent node in a binary tree structure.
+ * 
+ * The move is only valid if:
+ * - The parent node does not already have a pebble.
+ * - Both child nodes of the parent have pebbles.
+ * 
+ * If the move is valid, the pebble is moved from the child node to the parent node,
+ * and the move is recorded in the undo stack. The pebble bank and tree rendering
+ * are updated accordingly.
+ * 
+ * @param {number} childId - The ID of the child node attempting to move its pebble up.
+ * @returns {void} - Does not return a value.
+ */
 function tryMovePebbleUp(childId) {
   const parent = Math.floor((childId - 1) / 2);
   if (parent < 0) return;
@@ -235,14 +330,27 @@ function tryMovePebbleUp(childId) {
 }
 
 
+/**
+ * Reverts the last action performed in the game by popping it from the undo stack
+ * and restoring the previous state of the nodes and pebble bank.
+ * 
+ * The function handles three types of actions:
+ * - "moveUpOne": Moves a pebble back from one node to another.
+ * - "toggle": Restores the pebble state of a node and adjusts the pebble bank.
+ * - "moveUp": Moves a pebble back from one node to another and optionally restores
+ *   the state of a sibling node if it was affected.
+ * 
+ * After reverting the action, the function updates the pebble bank and re-renders
+ * the tree to reflect the changes.
+ */
 function undoAction() {
   const last = undoStack.pop();
   if (!last) return;
 
   if (last.type === "moveUpOne") {
-  nodes[last.from].hasPebble = true;
-  nodes[last.to].hasPebble = false;
-}
+    nodes[last.from].hasPebble = true;
+    nodes[last.to].hasPebble = false;
+  }
 
   if (last.type === "toggle") {
     nodes[last.id].hasPebble = last.wasPebbled;
@@ -261,6 +369,17 @@ function undoAction() {
   renderTree(treeDepth);
 }
 
+/**
+ * Note: I don't think is used anywhere in the code, but it was in the original code. --Bronzite, 2025-05-02
+ * 
+ * Animates the movement of a pebble element from one DOM element to another.
+ * A temporary clone of the pebble is created and animated to simulate the movement.
+ * The original pebble remains in place, and the temporary clone is removed after the animation.
+ *
+ * @param {HTMLElement} fromEl - The DOM element representing the starting position of the pebble.
+ * @param {HTMLElement} toEl - The DOM element representing the target position of the pebble.
+ * @param {Function} callback - A callback function to be executed after the animation completes.
+ */
 function animatePebbleMove(fromEl, toEl, callback) {
   const pebble = fromEl.cloneNode(true);
   document.body.appendChild(pebble);
