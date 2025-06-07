@@ -56,7 +56,7 @@ function renderTree(depth) {
 
   let nodeIndex = 0;
   const totalNodes = nodes.length;
-  let leafStartIndex = totalNodes - Math.pow(2, depth - 1);
+  leafStartIndex = totalNodes - Math.pow(2, depth - 1);
   const levelSpacing = 100;
 
   for (let level = 0; level < depth; level++) {
